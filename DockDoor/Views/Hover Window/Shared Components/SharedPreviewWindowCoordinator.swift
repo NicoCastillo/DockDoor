@@ -32,6 +32,7 @@ final class SharedPreviewWindowCoordinator: NSPanel {
     private var currentDockPosition: DockPosition = .bottom
 
     private var anchoredDockItem: (element: AXUIElement, iconRect: CGRect)?
+    private var currentlyDisplayedFolderURL: URL?
 
     private(set) var hasScreenRecordingPermission: Bool = PermissionsChecker.hasScreenRecordingPermission()
 
@@ -150,6 +151,7 @@ final class SharedPreviewWindowCoordinator: NSPanel {
         contentView = nil
         appName = ""
         currentlyDisplayedPID = nil
+        currentlyDisplayedFolderURL = nil
         mouseIsWithinPreviewWindow = false
         anchoredDockItem = nil
 
@@ -682,6 +684,7 @@ final class SharedPreviewWindowCoordinator: NSPanel {
                 return
             }
             currentlyDisplayedPID = newPID
+            currentlyDisplayedFolderURL = nil
             if let dockIconRect {
                 anchoredDockItem = (element: dockItemElement, iconRect: dockIconRect)
             }
@@ -899,11 +902,24 @@ final class SharedPreviewWindowCoordinator: NSPanel {
             Task { @MainActor [weak self] in
                 guard let self else { return }
 
+                // Same folder is already displayed and anchored. Skip re-display to prevent the
+                // panel shifting toward the dock: the icon rect read on the first hover is the
+                // magnified one, and a later read (once the dock un-magnifies) is smaller, which
+                // moves the computed position. Also avoids a needless content reload flash.
+                if let dockItemElement,
+                   currentlyDisplayedFolderURL == folderURL,
+                   anchoredDockItem?.element == dockItemElement,
+                   isVisible
+                {
+                    return
+                }
+
                 let screen = mouseScreen ?? NSScreen.main!
                 let activeDockPosition = DockUtils.getDockPosition()
                 currentDockPosition = activeDockPosition
                 appName = folderName
                 currentlyDisplayedPID = nil
+                currentlyDisplayedFolderURL = folderURL
                 onWindowTap = nil
                 hideFullPreviewWindow()
                 searchWindow?.hideSearch()
