@@ -30,6 +30,10 @@ Effortless Alt+Tab switching and dock previews that respect your privacy.
 
 ![Screenshot](/resources/dockdoorHero.png)
 
+> **Fork note:** building this fork on a new machine? See **[FORK-NOTES.md](FORK-NOTES.md)** —
+> the folder widget ships disabled upstream (`enableFolderWidget` defaults to `false`), so
+> hovering Downloads shows nothing until you flip it.
+
 ## Table of Contents
 
   <ol>
